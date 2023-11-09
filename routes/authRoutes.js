@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const User = mongoose.model("User");
 const jwt = require('jsonwebtoken');
 // 
+
+
 require('dotenv').config();
 // 
 const bcrypt = require('bcrypt');
@@ -15,17 +17,17 @@ const bcrypt = require('bcrypt');
 // async function mailer(recieveremail, code) {
 
 
-    // let transporter = nodemailer.createTransport({
-    //     host: "smtp.gmail.com",
-    //     port: 587,
+// let transporter = nodemailer.createTransport({
+//     host: "smtp.gmail.com",
+//     port: 587,
 
-    //     secure: false, // true for 465, false for other ports
-    //     requireTLS: true,
-    //     auth: {
-    //         user: "used2.codershub@gmail.com", // generated ethereal user
-    //         pass: "wxvzhpobedwcdvjf", // generated ethereal password
-    //     },
-    // });
+//     secure: false, // true for 465, false for other ports
+//     requireTLS: true,
+//     auth: {
+//         user: "used2.codershub@gmail.com", // generated ethereal user
+//         pass: "wxvzhpobedwcdvjf", // generated ethereal password
+//     },
+// });
 
 //     // send mail with defined transport object
 //     let info = await transporter.sendMail({
@@ -44,18 +46,210 @@ const bcrypt = require('bcrypt');
 
 //
 
-// router.post('/signup', async (req, res) => {
-//     // console.log('sent by client - ', req.body);
-//     const { name, email, password, dob, address } = req.body;
+router.post('/signup', async (req, res) => {
+    console.log('sent by client - ', req.body);
+    const { name, email, password, dob, address } = req.body;
+    res.send("Signup")
+    if (!name || !email || !password || !dob || !address) {
+        return res.status(422).json({ error: "Please add all the fields" });
+    }
+
+    User.findOne({ email: email })
+        .then(async (savedUser) => {
+            if (savedUser) {
+                return res.status(422).json({ error: "Invalid Credentials" });
+            }
+
+            const user = new User({
+                name,
+                email,
+                password,
+                dob,
+                address
+            })
+
+            try {
+                await user.save();
+                const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+                res.send({ message: "User Registered Successfully", token });
+            }
+            catch (err) {
+                console.log(err);
+            }
 
 
-//     const user = new User({
-//         name,
-//         email,
-//         password,
-//         dob,
-//         address
-//     })
+
+        })
+
+
+
+            try {
+
+                let VerificationCode = Math.floor(100000 + Math.random() * 900000);
+                   let user = [
+               {
+                         name,
+                         email,
+                       password,
+                        dob,
+                           address,
+                           VerificationCode
+                    }
+                ]
+                   await mailer(email, VerificationCode);
+    //                 res.send({ message: "Verification Code Sent to your Email", udata: user });
+            }
+            catch (err) {
+                console.log(err);
+            }         })
+
+// })
+// //     
+
+// //     try {
+// //         await user.save();
+// //         const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+// //         res.send({ message: "User Registered Successfully", token });
+// //     }
+// //     catch (err) {
+// //         console.log(err);
+// //     }
+
+// // })
+
+
+// // router.post('/verify', (req, res) => {
+// //     console.log('sent by client - ', req.body);
+// //     const { name, email, password, dob, address } = req.body;
+
+
+
+// //     User.findOne({ email: email })
+// //         .then(async (savedUser) => {
+// //             if (savedUser) {
+// //                 return res.status(422).json({ error: "Invalid Credentials" });
+// //             }
+// //             try {
+
+// //                 let VerificationCode = Math.floor(100000 + Math.random() * 900000);
+// //                 let user = [
+// //                     {
+// //                         name,
+// //                         email,
+// //                         password,
+// //                         dob,
+// //                         address,
+// //                         VerificationCode
+// //                     }
+// //                 ]
+// //                 await mailer(email, VerificationCode);
+// //                 res.send({ message: "Verification Code Sent to your Email", udata: user });
+// //             }
+// //             catch (err) {
+// //                 console.log(err);
+// //             }
+// //         })
+
+
+// // })
+
+
+
+ router.post('/signin', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+         return res.status(422).json({ error: "Please add email or password" });
+     }
+     const savedUser = await User.findOne({ email: email })
+
+     if (!savedUser) {
+         return res.status(422).json({ error: "Invalid Credentials" });
+     }
+
+     try {
+         bcrypt.compare(password, savedUser.password, (err, result) => {
+             if (result) {
+                 console.log("Password matched");
+                 const token = jwt.sign({ _id: savedUser._id }, process.env.JWT_SECRET);
+                 res.send({ token });
+             }
+             else {
+                 console.log('Password does not match');
+                 return res.status(422).json({ error: "Invalid Credentials" });
+            }
+         })
+     }
+     catch (err) {
+         console.log(err);
+     }
+ })
+
+
+/////////////////////////////////////////////////////////////
+
+
+
+
+router.post('/signup', async (req, res) => {
+    console.log('sent by client - ', req.body);
+    const { name, email, password, dob, address } = req.body;
+    res.send("Signup")
+    if (!name || !email || !password || !dob || !address) {
+        return res.status(422).json({ error: "Please add all the fields" });
+    }
+
+    User.findOne({ email: email })
+        .then(async (savedUser) => {
+            if (savedUser) {
+                return res.status(422).json({ error: "Invalid Credentials" });
+            }
+
+            const user = new User({
+                name,
+                email,
+                password,
+                dob,
+                address
+            })
+
+            try {
+                await user.save();
+                const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+                res.send({ message: "User Registered Successfully", token });
+            }
+            catch (err) {
+                console.log(err);
+            }
+
+
+
+        })
+
+
+
+    //             try {
+
+    //                 let VerificationCode = Math.floor(100000 + Math.random() * 900000);
+    //                 let user = [
+    //                     {
+    //                         name,
+    //                         email,
+    //                         password,
+    //                         dob,
+    //                         address,
+    //                         VerificationCode
+    //                     }
+    //                 ]
+    //                 await mailer(email, VerificationCode);
+    //                 res.send({ message: "Verification Code Sent to your Email", udata: user });
+    //             }
+    //             catch (err) {
+    //                 console.log(err);
+    //             }
+    //         })
+
+})
+//     
 
 //     try {
 //         await user.save();
@@ -72,9 +266,7 @@ const bcrypt = require('bcrypt');
 // router.post('/verify', (req, res) => {
 //     console.log('sent by client - ', req.body);
 //     const { name, email, password, dob, address } = req.body;
-//     if (!name || !email || !password || !dob || !address) {
-//         return res.status(422).json({ error: "Please add all the fields" });
-//     }
+
 
 
 //     User.findOne({ email: email })
@@ -107,34 +299,5 @@ const bcrypt = require('bcrypt');
 // })
 
 
-
-// router.post('/signin', async (req, res) => {
-//     const { email, password } = req.body;
-//     if (!email || !password) {
-//         return res.status(422).json({ error: "Please add email or password" });
-//     }
-//     const savedUser = await User.findOne({ email: email })
-
-//     if (!savedUser) {
-//         return res.status(422).json({ error: "Invalid Credentials" });
-//     }
-
-//     try {
-//         bcrypt.compare(password, savedUser.password, (err, result) => {
-//             if (result) {
-//                 console.log("Password matched");
-//                 const token = jwt.sign({ _id: savedUser._id }, process.env.JWT_SECRET);
-//                 res.send({ token });
-//             }
-//             else {
-//                 console.log('Password does not match');
-//                 return res.status(422).json({ error: "Invalid Credentials" });
-//             }
-//         })
-//     }
-//     catch (err) {
-//         console.log(err);
-//     }
-// })
 
 module.exports = router;
